@@ -1,0 +1,10 @@
+torch
+torchvision
+opencv-python
+numpy
+scikit-learn
+ultralytics
+filterpy
+lap
+matplotlib
+pandas
