@@ -1,0 +1,245 @@
+# 🚗 Vehicle Detection and Tracking using YOLOv8 + CBAM vs Faster R-CNN
+
+## 📌 Overview
+
+This project presents a comprehensive evaluation of two deep learning architectures for **vehicle detection and multi-object tracking in traffic scenes**:
+
+* **YOLOv8n with CBAM (Convolutional Block Attention Module)** — single-stage detector optimized for real-time performance.
+* **Faster R-CNN (ResNet-50-FPN)** — two-stage detector focused on high localization accuracy.
+
+The models were trained and evaluated on the **Cars Object Tracking Dataset (Unidata)** and integrated with **ByteTrack** for multi-object tracking.
+
+Results show that **YOLOv8n+CBAM achieves higher overall detection performance and ~5× faster inference**, making it more suitable for real-time deployment.
+
+---
+
+## 📂 Dataset
+
+### Cars Object Tracking Dataset — Unidata
+
+The dataset contains **10,000+ annotated frames** extracted from real-world road traffic videos.
+
+### Key Features
+
+* Real-world traffic scenarios
+* Temporally consistent video frames
+* Polygon and bounding box annotations (`annotations.xml`)
+* Designed for object detection and multi-object tracking tasks
+* Continuous sequences suitable for tracking algorithms
+
+### Vehicle Classes Used in Training
+
+This study extends the dataset into **eight vehicle categories**:
+
+| Class      | Description                           |
+| ---------- | ------------------------------------- |
+| Auto       | Three-wheeled auto-rickshaws          |
+| Bus        | Passenger buses                       |
+| Car        | Passenger cars and SUVs               |
+| LCV        | Light commercial vehicles             |
+| Motorcycle | Two-wheelers                          |
+| Multiaxle  | Heavy multi-axle trucks               |
+| Tractor    | Agricultural or construction vehicles |
+| Truck      | Medium/heavy goods vehicles           |
+
+### Dataset Access
+
+* Free preview: https://huggingface.co/datasets/UniDataPro/cars-object-tracking
+* Full dataset: https://unidata.pro/datasets/cars-object-tracking/
+* License: CC BY-NC-ND 4.0
+
+---
+
+## 🎯 Objectives
+
+* Compare single-stage vs two-stage detection architectures.
+* Improve YOLO feature representation using CBAM attention.
+* Evaluate performance using standard detection metrics.
+* Integrate detection outputs with ByteTrack for multi-object tracking.
+* Assess real-time deployment feasibility.
+
+---
+
+## 🧠 Model Architectures
+
+### 1️⃣ YOLOv8n + CBAM
+
+Single-stage object detector enhanced with attention mechanisms.
+
+**Modifications**
+
+* CBAM integrated into feature pyramid network (neck).
+* Channel and spatial attention improves feature representation.
+* Designed to improve detection of occluded and visually similar objects.
+
+**Training Configuration**
+
+* Epochs: 30
+* Input resolution: 640×640
+* Optimizer: AdamW
+* Learning rate schedule: Cosine decay
+* Training time: ~36.5 minutes
+* Model size: 6.2 MB
+
+---
+
+### 2️⃣ Faster R-CNN (ResNet-50-FPN)
+
+Two-stage detection pipeline:
+
+1. Region Proposal Network (RPN)
+2. Region classification and bounding box refinement
+
+**Configuration**
+
+* Backbone: ResNet-50-FPN
+* Pretrained on ImageNet
+* Training time: ~21.6 minutes
+* Model size: 165.9 MB
+
+---
+
+## 🔎 Evaluation Methodology
+
+### Detection Metrics
+
+* **IoU threshold:** 0.5
+* **AP calculation:** 11-point interpolation
+* **mAP@0.5:** Mean AP across all classes
+* **Precision & Recall**
+* **Inference Speed (FPS)** on identical GPU hardware
+
+### Tracking
+
+* **ByteTrack** used for multi-object tracking.
+* Associates high and low confidence detections.
+* Evaluates robustness under occlusion.
+
+---
+
+## 📊 Results
+
+### Overall Performance
+
+| Metric        | YOLOv8n + CBAM | Faster R-CNN |
+| ------------- | -------------- | ------------ |
+| mAP@0.5       | **0.7301**     | 0.6809       |
+| Precision     | **0.6562**     | 0.2478       |
+| Recall        | 0.7318         | **0.9709**   |
+| FPS (GPU)     | **85.5**       | 18.3         |
+| Model Size    | **6.2 MB**     | 165.9 MB     |
+| Training Time | 36.5 min       | **21.6 min** |
+
+### Per-Class AP@0.5
+
+| Class      | YOLOv8n+CBAM | Faster R-CNN |
+| ---------- | ------------ | ------------ |
+| Auto       | 0.48         | 0.72         |
+| Bus        | 0.61         | 0.79         |
+| Car        | 0.62         | 0.87         |
+| LCV        | 0.33         | 0.47         |
+| Motorcycle | 0.44         | 0.80         |
+| Multiaxle  | 0.42         | 0.53         |
+| Tractor    | 0.52         | 0.70         |
+| Truck      | 0.47         | 0.57         |
+
+---
+
+## 💡 Key Findings
+
+### 1. Performance Trade-off
+
+* Faster R-CNN achieves higher per-class AP and extremely high recall.
+* However, very low precision leads to more false positives.
+* YOLOv8n+CBAM provides a better precision–recall balance, resulting in higher overall mAP.
+
+### 2. Real-Time Capability
+
+* YOLOv8n+CBAM: 85.5 FPS → real-time ready.
+* Faster R-CNN: 18.3 FPS → unsuitable for live deployment.
+
+### 3. Model Efficiency
+
+* YOLOv8n+CBAM is ~27× smaller.
+* Suitable for edge devices (Jetson Nano, embedded systems).
+
+### 4. Tracking Performance
+
+* YOLO produces cleaner detections → fewer ghost tracks.
+* Faster R-CNN reduces missed detections but increases false tracks.
+
+### 5. Class-Level Observations
+
+* Motorcycle detection is most challenging.
+* Large vehicles perform consistently across models.
+* Small-object detection requires improvement.
+
+---
+
+## ⚠️ Limitations
+
+* Training limited to 30 epochs.
+* Confidence threshold sweep not performed.
+* No CBAM ablation study.
+* Limited hyperparameter optimization.
+
+---
+
+## 🚀 Deployment Recommendations
+
+| Scenario                     | Recommended Model | Reason                |
+| ---------------------------- | ----------------- | --------------------- |
+| Real-time traffic monitoring | YOLOv8n+CBAM      | High FPS, lightweight |
+| Edge deployment              | YOLOv8n+CBAM      | Small model size      |
+| High-recall surveillance     | Faster R-CNN      | Very high recall      |
+| Offline forensic analysis    | Faster R-CNN      | Strong localization   |
+| Tracking pipeline input      | YOLOv8n+CBAM      | Balanced detections   |
+
+---
+
+## 🔬 Future Work
+
+* Train YOLOv8n+CBAM for 50–100 epochs.
+* Conduct CBAM ablation study.
+* Evaluate YOLOv8s/m variants.
+* Improve small-object detection strategies.
+* Apply knowledge distillation or model ensembles.
+* Perform threshold and hyperparameter optimization.
+
+---
+
+## 📐 Key Equations
+
+**Intersection over Union (IoU)**
+IoU = |B_pred ∩ B_gt| / |B_pred ∪ B_gt|
+
+**Average Precision (11-point)**
+AP = (1/11) Σ max precision at recall r ∈ {0, 0.1, ..., 1}
+
+**Mean Average Precision**
+mAP = (1/C) Σ AP_c
+
+---
+
+## 🛠 Tech Stack
+
+* Python
+* PyTorch
+* Ultralytics YOLOv8
+* Faster R-CNN (TorchVision)
+* ByteTrack
+* OpenCV
+
+---
+
+## 📜 License
+
+Dataset: CC BY-NC-ND 4.0
+Code: Specify your project license (MIT recommended).
+
+---
+
+## 👤 Author
+
+Girish G Hegde — Vehicle Detection and Tracking Research
+
